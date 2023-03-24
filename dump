@@ -1,0 +1,6 @@
+# for idx, file in enumerate(image_files):
+    #     #to load an image
+    #     image = cv2.imread(file)
+
+    #     #convert the BGR image to RGB before processing with cvtColor
+    #     results = face_mesh.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
