@@ -5,8 +5,7 @@ import cv2 #for Computer vision. It triggers the Webcam of your local machine
 import mediapipe as mp  # a python library that can identify and measure landmarks on human body
 import csv #for reading the filters annotation files
 import numpy as np #for arrays and managing the points
-import math 
-
+import filter_api as api
 #Let's set up a small unregular api that can fetch our filter image as well as their annotations and properties(alpha and morph)
 #images are usually in RGB but some images have 'alpha' which controls the transparency 
 
@@ -126,6 +125,7 @@ def load_filter_images(img_path, has_alpha):
 def load_landmarks(annotation_file):
     """ This function gets the annotation file of each filter images and extracts the x and y 
     landmark coordinates returning the points when called"""
+    
     with open(annotation_file) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=",")
         points = {}
@@ -143,11 +143,8 @@ def get_convex_points(points):
     apart from the face, the convex points could include a polygon, cars, etc... as long as its a closed shape
     with boundaries. This func enabes python to be aware of hull points in the face in order to be able to
     fit the filter on the face much better"""
-    convex_points = [] #list of convex points
-
-    #To find the convex hull of our points array
-    convex_points_index = cv2.convexHull(np.array(list(points.values())), returnPoints=False, clockwise=False,)
-    facial_hull_points = [
+    
+        facial_hull_points = [
         #hull points of the eyes, nose, eyebrows, and lips
         [17], [18], [19], [20], [21], [22], [23], [24], [25], [26],
         [27], [28], [29], [30], [31], [32], [33], [34], [35],  
@@ -156,11 +153,34 @@ def get_convex_points(points):
         [60], [61], [62], [63], [64], [65], [66], [67], 
           
     ]
+    #To find the convex hull of our points array
+    convex_points_index = cv2.convexHull(np.array(list(points.values())), returnPoints=False, clockwise=False,)
+
+    convex_points = [] #list of convex points
+
     convex_points_index = np.concatenate((convex_points_index, facial_hull_points))
     for i in range(0, len(convex_points_index)):
         convex_points.append(points[str(convex_points_index[i][0])])
 
     return convex_points, convex_points_index
-    
-  
+
+
+def filters(filter_name=""):
+    """ function for getting filters from filter api and"""
+
+    filters = api[filter_name="filter_name"]
+
+    for filter in filters:
+        #for all available filters in our api to load
+        filter_dict = {}
+
+        #calling our load filter images func to seperate the alpha from our fetched filter images from our api
+        img, img_alpha = load_filter_images(filter['path'], filter['has_alpha'])
+
+        # loading the landmark by getting the annotation points from the annotation file
+        func_points = load_landmarks(filter['anno_path'])
+        #passing the points, img,  and img_alpha values into our dictionary for later use
+        filter_dict['points'] = func_points
+        filter_dict['img'] = img
+        filter_dict['alpha'] = img_alpha
 
